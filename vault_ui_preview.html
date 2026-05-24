@@ -1,0 +1,351 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; }
+  .vault { background: #080808; color: #fff; min-height: 600px; border-radius: 16px; overflow: hidden; font-size: 13px; }
+  .nav { background: rgba(8,8,8,0.95); border-bottom: 1px solid #1a1a1a; padding: 0 20px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 6px; font-size: 14px; letter-spacing: 0.2em; color: #fff; }
+  .crown { color: #D4AF37; font-size: 14px; }
+  .nav-links { display: flex; gap: 20px; }
+  .nav-link { color: #A0A0A0; font-size: 12px; }
+  .nav-link.active { color: #D4AF37; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .balance-pill { background: #111; border: 1px solid #262626; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-family: monospace; color: #D4AF37; }
+  .tabs { display: flex; padding: 12px 20px 0; gap: 4px; border-bottom: 1px solid #1a1a1a; }
+  .tab { padding: 7px 14px; border-radius: 8px 8px 0 0; font-size: 11px; cursor: pointer; color: #5A5A5A; border: 1px solid transparent; border-bottom: none; }
+  .tab.active { background: #111; border-color: #1a1a1a; color: #fff; }
+  .pages { display: flex; }
+  .page { width: 100%; display: none; }
+  .page.active { display: block; }
+  .hero { padding: 40px 20px 32px; text-align: center; background: radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.1) 0%, transparent 70%); position: relative; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.25); border-radius: 20px; padding: 3px 10px; font-size: 10px; color: #E8CC6A; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 16px; }
+  .dot { width: 5px; height: 5px; background: #D4AF37; border-radius: 50%; }
+  .hero-title { font-size: 32px; font-weight: 300; line-height: 1.1; margin-bottom: 8px; }
+  .hero-title em { font-style: italic; background: linear-gradient(135deg, #D4AF37, #E8CC6A); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { color: #A0A0A0; font-size: 12px; margin-bottom: 20px; }
+  .cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-gold { background: linear-gradient(135deg, #D4AF37, #A88820); color: #000; font-weight: 600; padding: 9px 20px; border-radius: 20px; font-size: 12px; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .btn-ghost { background: #111; border: 1px solid #262626; color: #fff; padding: 9px 20px; border-radius: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .grid-section { padding: 20px; }
+  .section-label { font-size: 10px; color: #D4AF37; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .section-title { font-size: 18px; font-weight: 300; color: #fff; margin-bottom: 14px; }
+  .content-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .card { background: #111; border: 1px solid #1a1a1a; border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+  .card:hover { transform: translateY(-3px); }
+  .card-thumb { position: relative; aspect-ratio: 3/4; overflow: hidden; }
+  .thumb-img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-blur { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative; overflow: hidden; }
+  .thumb-blur::before { content: ''; position: absolute; inset: 0; backdrop-filter: blur(8px); }
+  .thumb-grad { position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: linear-gradient(transparent, rgba(0,0,0,0.9)); }
+  .lock-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .lock-icon { width: 30px; height: 30px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .prem-badge { position: absolute; top: 6px; left: 6px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 2px 6px; font-size: 9px; color: #E8CC6A; letter-spacing: 0.05em; text-transform: uppercase; }
+  .unlocked-badge { position: absolute; top: 6px; left: 6px; font-size: 14px; }
+  .video-badge { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+  .card-info { padding: 8px 10px 10px; }
+  .card-title { font-size: 11px; color: #fff; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-price { font-size: 10px; font-family: monospace; color: #D4AF37; display: flex; align-items: center; gap: 3px; }
+  .unlocked-price { font-size: 10px; color: #D4AF37; display: flex; align-items: center; gap: 3px; }
+
+  /* Explore page */
+  .filter-bar { display: flex; gap: 8px; padding: 14px 20px 10px; flex-wrap: wrap; }
+  .filter-group { display: flex; background: #111; border: 1px solid #262626; border-radius: 20px; padding: 3px; gap: 2px; }
+  .filter-btn { padding: 5px 12px; border-radius: 16px; font-size: 11px; cursor: pointer; color: #A0A0A0; border: none; background: none; }
+  .filter-btn.active { background: #D4AF37; color: #000; font-weight: 600; }
+  .filter-btn.active-ghost { background: rgba(255,255,255,0.08); color: #fff; }
+  .explore-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 20px 20px; }
+
+  /* Content detail page */
+  .detail-layout { display: grid; grid-template-columns: 1fr 200px; gap: 16px; padding: 16px 20px 20px; }
+  .media-box { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 14px; aspect-ratio: 16/10; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .media-locked-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a1a, #0d0d0d); filter: blur(2px); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .media-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .big-lock { width: 44px; height: 44px; border: 1px solid rgba(212,175,55,0.3); background: rgba(212,175,55,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .sidebar-card { background: #111; border: 1px solid #1a1a1a; border-radius: 14px; padding: 14px; }
+  .meta-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: flex-start; }
+  .meta-icon { font-size: 11px; color: #5A5A5A; margin-top: 2px; }
+  .meta-label { font-size: 10px; color: #5A5A5A; }
+  .meta-val { font-size: 11px; color: #A0A0A0; }
+  .price-big { font-size: 28px; font-weight: 300; color: #D4AF37; font-family: 'Georgia', serif; }
+  .unlock-btn { background: linear-gradient(135deg, #D4AF37, #A88820); color: #000; font-weight: 600; padding: 11px; border-radius: 12px; font-size: 12px; border: none; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; }
+
+  /* Wallet page */
+  .wallet-page { padding: 16px 20px 20px; }
+  .balance-card { background: linear-gradient(135deg, #1a1500, #0d0d0d); border: 1px solid rgba(212,175,55,0.2); border-radius: 18px; padding: 20px; margin-bottom: 18px; position: relative; overflow: hidden; }
+  .balance-card::before { content: ''; position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 200px; height: 100px; background: radial-gradient(ellipse, rgba(212,175,55,0.15), transparent); }
+  .balance-label { font-size: 10px; color: #5A5A5A; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .balance-amount { display: flex; align-items: flex-end; gap: 8px; }
+  .balance-num { font-size: 48px; font-weight: 300; color: #D4AF37; line-height: 1; }
+  .balance-unit { font-size: 14px; color: #A0A0A0; margin-bottom: 6px; }
+  .pkg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .pkg-card { background: #111; border: 1px solid #262626; border-radius: 14px; padding: 14px; cursor: pointer; position: relative; transition: border-color 0.2s; }
+  .pkg-card.selected { border-color: #D4AF37; background: rgba(212,175,55,0.08); }
+  .pkg-badge { position: absolute; top: -8px; left: 10px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 2px 8px; font-size: 9px; color: #E8CC6A; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pkg-coins { font-size: 24px; font-weight: 300; color: #fff; margin: 6px 0 2px; }
+  .pkg-price { font-size: 13px; font-weight: 600; color: #D4AF37; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 8px; }
+  .tx-list { background: #111; border: 1px solid #1a1a1a; border-radius: 14px; overflow: hidden; }
+  .tx-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #1a1a1a; }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .tx-info { flex: 1; }
+  .tx-name { font-size: 11px; color: #fff; }
+  .tx-date { font-size: 10px; color: #3a3a3a; margin-top: 1px; }
+  .tx-amt { font-size: 11px; font-family: monospace; }
+  .tx-amt.credit { color: #4ade80; }
+  .tx-amt.debit { color: #A0A0A0; }
+
+  /* Admin */
+  .admin-layout { display: flex; min-height: 420px; }
+  .admin-sidebar { width: 140px; background: #0d0d0d; border-right: 1px solid #1a1a1a; padding: 14px 10px; flex-shrink: 0; }
+  .admin-logo { display: flex; align-items: center; gap: 5px; font-size: 12px; letter-spacing: 0.2em; margin-bottom: 4px; padding: 0 4px; }
+  .admin-badge { font-size: 8px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.25); color: #E8CC6A; border-radius: 10px; padding: 1px 6px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 14px; margin-left: 4px; }
+  .admin-nav-item { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 9px; font-size: 11px; color: #5A5A5A; margin-bottom: 2px; cursor: pointer; }
+  .admin-nav-item.active { background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.2); color: #D4AF37; }
+  .admin-main { flex: 1; padding: 16px; overflow: hidden; }
+  .admin-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat-card { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 12px; }
+  .stat-card.gold { background: linear-gradient(135deg, #1a1500, #111); border-color: rgba(212,175,55,0.2); }
+  .stat-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-bottom: 8px; border: 1px solid #2a2a2a; }
+  .stat-val { font-size: 22px; font-weight: 300; color: #fff; margin-bottom: 2px; }
+  .stat-val.gold { color: #D4AF37; }
+  .stat-lbl { font-size: 9px; color: #5A5A5A; text-transform: uppercase; letter-spacing: 0.08em; }
+  .chart-area { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 12px; }
+  .chart-title { font-size: 11px; color: #fff; margin-bottom: 10px; font-weight: 500; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 70px; }
+  .bar { background: rgba(212,175,55,0.3); border-radius: 4px 4px 0 0; flex: 1; min-width: 0; position: relative; transition: background 0.2s; }
+  .bar:hover { background: rgba(212,175,55,0.6); }
+  .bar-line { position: absolute; inset: 0; border-radius: 4px 4px 0 0; background: linear-gradient(to top, rgba(212,175,55,0.5), rgba(212,175,55,0.2)); }
+</style>
+
+<div class="vault">
+  <div class="nav">
+    <div class="logo"><span class="crown">♛</span> VAULT</div>
+    <div class="nav-links">
+      <span class="nav-link">Explore</span>
+      <span class="nav-link">Wallet</span>
+      <span class="nav-link">Profile</span>
+    </div>
+    <div class="nav-right">
+      <div class="balance-pill">⬡ 1,250</div>
+      <div style="width:28px;height:28px;border-radius:50%;background:#222;border:1px solid #333;"></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">Home</div>
+    <div class="tab" onclick="switchTab(1)">Explore</div>
+    <div class="tab" onclick="switchTab(2)">Content</div>
+    <div class="tab" onclick="switchTab(3)">Wallet</div>
+    <div class="tab" onclick="switchTab(4)">Admin</div>
+  </div>
+
+  <div id="pages">
+
+    <!-- HOME -->
+    <div class="page active">
+      <div class="hero">
+        <div class="badge"><span class="dot"></span>Exclusive Premium Content</div>
+        <div class="hero-title">Premium Content,<br><em>Unlocked.</em></div>
+        <div class="hero-sub">Browse exclusive images and videos. Recharge your wallet and unlock instantly.</div>
+        <div class="cta-row">
+          <button class="btn-gold">Browse Content →</button>
+          <button class="btn-ghost">⬡ Get Coins</button>
+        </div>
+      </div>
+      <div class="grid-section">
+        <div class="section-label">Featured</div>
+        <div class="section-title">Hand-Picked Exclusives</div>
+        <div class="content-grid">
+          <div class="card">
+            <div class="card-thumb">
+              <div class="thumb-blur" style="background:linear-gradient(135deg,#2a1a0a,#1a0a0a);">🌆<div class="thumb-grad"></div><div class="lock-overlay"><div class="lock-icon">🔒</div></div><div class="prem-badge">PREMIUM</div></div>
+            </div>
+            <div class="card-info"><div class="card-title">City at Dusk</div><div class="card-price">⬡ 50</div></div>
+          </div>
+          <div class="card">
+            <div class="card-thumb">
+              <div class="thumb-blur" style="background:linear-gradient(135deg,#0a1a2a,#050d1a);">🌊<div class="thumb-grad"></div><div class="lock-overlay"><div class="lock-icon">🔒</div></div></div>
+            </div>
+            <div class="card-info"><div class="card-title">Ocean Series #3</div><div class="card-price">⬡ 25</div></div>
+          </div>
+          <div class="card">
+            <div class="card-thumb">
+              <div class="thumb-blur" style="background:linear-gradient(135deg,#1a0a1a,#0a050a);">✨<div class="thumb-grad"></div><div class="unlocked-badge">✅</div><div class="video-badge">▶</div></div>
+            </div>
+            <div class="card-info"><div class="card-title">Exclusive Video</div><div class="unlocked-price">✅ Unlocked</div></div>
+          </div>
+          <div class="card">
+            <div class="card-thumb">
+              <div class="thumb-blur" style="background:linear-gradient(135deg,#0a1a0a,#05100a);">🌿<div class="thumb-grad"></div><div class="lock-overlay"><div class="lock-icon">🔒</div></div><div class="prem-badge">PREMIUM</div></div>
+            </div>
+            <div class="card-info"><div class="card-title">Forest Light</div><div class="card-price">⬡ 100</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPLORE -->
+    <div class="page">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <div class="filter-btn active">All</div>
+          <div class="filter-btn">Images</div>
+          <div class="filter-btn">Videos</div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-btn active-ghost">New</div>
+          <div class="filter-btn">Popular</div>
+          <div class="filter-btn">Cheapest</div>
+        </div>
+        <div style="padding:5px 12px;border-radius:16px;border:1px solid #262626;background:#111;font-size:11px;color:#A0A0A0;cursor:pointer;">Premium Only</div>
+      </div>
+      <div class="explore-grid">
+        <div class="card"><div class="card-thumb"><div class="thumb-blur" style="background:linear-gradient(135deg,#1a1500,#0a0a00);">🏙️<div class="thumb-grad"></div><div class="prem-badge">PREMIUM</div><div class="lock-overlay"><div class="lock-icon">🔒</div></div></div></div><div class="card-info"><div class="card-title">Night Cityscape</div><div class="card-price">⬡ 75</div></div></div>
+        <div class="card"><div class="card-thumb"><div class="thumb-blur" style="background:linear-gradient(135deg,#001a0a,#00100a);">🌲<div class="thumb-grad"></div><div class="lock-overlay"><div class="lock-icon">🔒</div></div></div></div><div class="card-info"><div class="card-title">Forest Dew</div><div class="card-price">⬡ 10</div></div></div>
+        <div class="card"><div class="card-thumb"><div class="thumb-blur" style="background:linear-gradient(135deg,#1a000a,#100005);">🌙<div class="thumb-grad"></div><div class="video-badge">▶</div><div class="lock-overlay"><div class="lock-icon">🔒</div></div></div></div><div class="card-info"><div class="card-title">Midnight Film</div><div class="card-price">⬡ 50</div></div></div>
+        <div class="card"><div class="card-thumb"><div class="thumb-blur" style="background:linear-gradient(135deg,#001520,#000a14);">🌅<div class="thumb-grad"></div><div class="lock-overlay"><div class="lock-icon">🔒</div></div></div></div><div class="card-info"><div class="card-title">Dawn Breaks</div><div class="card-price">⬡ 20</div></div></div>
+        <div class="card"><div class="card-thumb"><div class="thumb-blur" style="background:linear-gradient(135deg,#1a1500,#14100a);">⭐<div class="thumb-grad"></div><div class="prem-badge">PREMIUM</div><div class="video-badge">▶</div><div class="lock-overlay"><div class="lock-icon">🔒</div></div></div></div><div class="card-info"><div class="card-title">Stars Timelapse</div><div class="card-price">⬡ 150</div></div></div>
+        <div class="card"><div class="card-thumb"><div class="thumb-blur" style="background:linear-gradient(135deg,#0a001a,#060010);">💜<div class="thumb-grad"></div><div class="unlocked-badge">✅</div></div></div><div class="card-info"><div class="card-title">Aurora Series</div><div class="unlocked-price">✅ Unlocked</div></div></div>
+      </div>
+    </div>
+
+    <!-- CONTENT DETAIL -->
+    <div class="page">
+      <div style="padding:14px 20px 0;">
+        <div class="badge" style="margin-bottom:8px;"><span class="dot"></span>PREMIUM</div>
+        <div style="font-size:22px;font-weight:300;color:#fff;margin-bottom:2px;">City at Dusk — Limited Edition</div>
+        <div style="font-size:11px;color:#5A5A5A;">Exclusive premium photograph</div>
+      </div>
+      <div class="detail-layout">
+        <div>
+          <div class="media-box">
+            <div class="media-locked-bg">🌆</div>
+            <div class="media-overlay">
+              <div class="big-lock">🔒</div>
+              <div style="color:#fff;font-size:12px;font-weight:500;">Content Locked</div>
+              <div style="color:#5A5A5A;font-size:10px;">Unlock for full high-res image</div>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-card">
+          <div class="meta-row"><span class="meta-icon">📅</span><div><div class="meta-label">Published</div><div class="meta-val">12 May 2025</div></div></div>
+          <div class="meta-row"><span class="meta-icon">👁</span><div><div class="meta-label">Unlocks</div><div class="meta-val">342 times</div></div></div>
+          <div style="border-top:1px solid #1a1a1a;padding-top:12px;margin-top:4px;">
+            <div style="font-size:10px;color:#5A5A5A;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Price</div>
+            <div style="display:flex;align-items:baseline;gap:6px;"><span style="font-size:16px;color:#D4AF37;">⬡</span><span class="price-big">50</span><span style="color:#5A5A5A;font-size:11px;">coins</span></div>
+            <div style="font-size:10px;color:#5A5A5A;margin-top:2px;">≈ €0.50</div>
+            <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #1a1a1a;">
+              <div><div style="font-size:10px;color:#5A5A5A;">Your Balance</div><div style="font-size:12px;color:#D4AF37;font-family:monospace;margin-top:1px;">⬡ 1,250</div></div>
+            </div>
+            <button class="unlock-btn">⬡ Unlock for 50 Coins</button>
+            <div style="font-size:9px;color:#3a3a3a;text-align:center;margin-top:6px;">Permanent access after unlock</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALLET -->
+    <div class="page">
+      <div class="wallet-page">
+        <div style="margin-bottom:14px;"><div class="section-label">My Wallet</div><div style="font-size:20px;font-weight:300;color:#fff;">Wallet & Balance</div></div>
+        <div class="balance-card">
+          <div class="balance-label">Available Balance</div>
+          <div class="balance-amount"><span class="balance-num">1,250</span><span class="balance-unit">coins</span></div>
+          <div style="font-size:10px;color:#5A5A5A;margin-top:4px;">≈ €12.50 value</div>
+        </div>
+        <div style="font-size:14px;font-weight:300;color:#fff;margin-bottom:10px;">Recharge Coins</div>
+        <div class="pkg-grid">
+          <div class="pkg-card">
+            <div style="font-size:9px;color:#5A5A5A;text-transform:uppercase;letter-spacing:0.08em;">Starter</div>
+            <div class="pkg-coins">100</div>
+            <div style="font-size:9px;color:#5A5A5A;">coins</div>
+            <div class="pkg-price">€1.00</div>
+          </div>
+          <div class="pkg-card selected">
+            <div class="pkg-badge">Best Value</div>
+            <div style="font-size:9px;color:#5A5A5A;text-transform:uppercase;letter-spacing:0.08em;">Popular</div>
+            <div class="pkg-coins">300</div>
+            <div style="font-size:9px;color:#5A5A5A;">coins</div>
+            <div class="pkg-price">€2.80</div>
+          </div>
+          <div class="pkg-card">
+            <div style="font-size:9px;color:#5A5A5A;text-transform:uppercase;letter-spacing:0.08em;">Premium</div>
+            <div class="pkg-coins">1000</div>
+            <div style="font-size:9px;color:#5A5A5A;">coins</div>
+            <div class="pkg-price">€8.50</div>
+          </div>
+        </div>
+        <button class="btn-gold" style="width:100%;justify-content:center;border-radius:12px;padding:12px;font-size:13px;margin-bottom:14px;">⬡ Recharge Now · 300 coins</button>
+        <div style="font-size:13px;font-weight:300;color:#fff;margin-bottom:8px;">Transaction History</div>
+        <div class="tx-list">
+          <div class="tx-row"><div class="tx-icon" style="background:rgba(74,222,128,0.08);">↙</div><div class="tx-info"><div class="tx-name">Recharge</div><div class="tx-date">24 May 2025 · 14:31</div></div><div><div class="tx-amt credit">+300 coins</div><div style="font-size:9px;color:#3a3a3a;font-family:monospace;text-align:right;">Bal: 1,250</div></div></div>
+          <div class="tx-row"><div class="tx-icon" style="background:rgba(255,255,255,0.03);">↗</div><div class="tx-info"><div class="tx-name">Content Unlock</div><div class="tx-date">23 May 2025 · 19:12</div></div><div><div class="tx-amt debit">-50 coins</div><div style="font-size:9px;color:#3a3a3a;font-family:monospace;text-align:right;">Bal: 950</div></div></div>
+          <div class="tx-row"><div class="tx-icon" style="background:rgba(212,175,55,0.08);">★</div><div class="tx-info"><div class="tx-name">Welcome Bonus</div><div class="tx-date">22 May 2025 · 09:00</div></div><div><div class="tx-amt credit">+25 coins</div><div style="font-size:9px;color:#3a3a3a;font-family:monospace;text-align:right;">Bal: 1,000</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page">
+      <div class="admin-layout">
+        <div class="admin-sidebar">
+          <div class="admin-logo"><span class="crown">♛</span> VAULT</div>
+          <div class="admin-badge">Admin</div>
+          <div class="admin-nav-item active">⊞ Dashboard</div>
+          <div class="admin-nav-item">↑ Upload</div>
+          <div class="admin-nav-item">👤 Users</div>
+          <div class="admin-nav-item">📊 Analytics</div>
+          <div class="admin-nav-item">⚙ Settings</div>
+        </div>
+        <div class="admin-main">
+          <div style="font-size:16px;font-weight:300;color:#fff;margin-bottom:12px;">Dashboard</div>
+          <div class="admin-stats">
+            <div class="stat-card gold">
+              <div class="stat-icon" style="background:rgba(212,175,55,0.1);border-color:rgba(212,175,55,0.2);">📈</div>
+              <div class="stat-val gold">€847</div>
+              <div class="stat-lbl">Total Revenue</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">👤</div>
+              <div class="stat-val">1,284</div>
+              <div class="stat-lbl">Total Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🖼</div>
+              <div class="stat-val">64</div>
+              <div class="stat-lbl">Published Items</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⬡</div>
+              <div class="stat-val">84,700</div>
+              <div class="stat-lbl">Coins Issued</div>
+            </div>
+          </div>
+          <div class="chart-area">
+            <div class="chart-title">Revenue — Last 14 Days</div>
+            <div class="chart-bars" id="bars"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const allTabs = document.querySelectorAll('.tab');
+  const allPages = document.querySelectorAll('.page');
+  function switchTab(i) {
+    allTabs.forEach((t,j) => t.classList.toggle('active', i===j));
+    allPages.forEach((p,j) => p.classList.toggle('active', i===j));
+  }
+  const barsEl = document.getElementById('bars');
+  const heights = [30,45,25,60,40,70,35,55,65,80,45,90,60,75];
+  heights.forEach(h => {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    b.style.height = h + '%';
+    b.innerHTML = '<div class="bar-line"></div>';
+    barsEl.appendChild(b);
+  });
+</script>
